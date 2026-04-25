@@ -23,11 +23,11 @@ wheels/
 
 # Project specific
 .translate_workspace/
-!nvidia-2047718945059156440-01.mp4
-!nvidia-2047718945059156440-01_zh.mp4
 *.mp4
 *.wav
 *.mp3
+!nvidia-2047718945059156440-01.mp4
+!nvidia-2047718945059156440-01_zh.mp4
 
 # IDEs
 .vscode/
