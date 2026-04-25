@@ -61,6 +61,18 @@ python -m audiotranslate.main input.mp4 --target_lang zh --source_lang en --voic
 - `--voice`: 指定 TTS 发音人（如 `zh-CN-YunxiNeural` 为磁性男声）。
 - `--model_size`: Whisper 模型大小 (`tiny`, `base`, `small`, `medium`, `large-v3`)。
 
+## 📺 效果对比 (Case Study)
+
+我们以英伟达 GTC 大会黄仁勋的演讲片段为例，展示转换前后的效果对比：
+
+| 原始视频 (English) | 翻译配音版 (Chinese) |
+| :--- | :--- |
+| `nvidia-...-01.mp4` | `nvidia-...-01_zh.mp4` |
+| 包含 Jensen Huang 的原声及现场背景音。 | 替换为磁性男声 (Yunxi)，**背景音完整保留**。 |
+| - | **自动调速**：针对较长的中文翻译进行了语速优化，无重叠。 |
+
+> **提示**：你可以直接下载本项目根目录下的示例视频进行试听对比。
+
 ## 📂 项目结构
 
 ```text
