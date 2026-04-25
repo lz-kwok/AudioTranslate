@@ -65,11 +65,15 @@ python -m audiotranslate.main input.mp4 --target_lang zh --source_lang en --voic
 
 我们以英伟达 GTC 大会黄仁勋的演讲片段为例，展示转换前后的效果对比：
 
-| 原始视频 (English) | 翻译配音版 (Chinese) |
-| :---: | :---: |
-| <video src="https://github.com/lz-kwok/AudioTranslate/raw/main/nvidia-2047718945059156440-01.mp4" width="320" controls></video> | <video src="https://github.com/lz-kwok/AudioTranslate/raw/main/nvidia-2047718945059156440-01_zh.mp4" width="320" controls></video> |
-| 包含 Jensen Huang 的原声及现场背景音。 | 替换为磁性男声 (Yunxi)，**背景音完整保留**。 |
-| - | **自动调速**：针对较长的中文翻译进行了语速优化，无重叠。 |
+<div align="center">
+  <h3>原始视频 (English)</h3>
+  <video src="https://github.com/lz-kwok/AudioTranslate/raw/main/nvidia-2047718945059156440-01.mp4" width="600" controls></video>
+  <p>包含 Jensen Huang 的原声及现场背景音。</p>
+  <br/>
+  <h3>翻译配音版 (Chinese)</h3>
+  <video src="https://github.com/lz-kwok/AudioTranslate/raw/main/nvidia-2047718945059156440-01_zh.mp4" width="600" controls></video>
+  <p>替换为磁性男声 (Yunxi)，<strong>背景音完整保留</strong>，并进行了<strong>自动语速对齐</strong>。</p>
+</div>
 
 > **提示**：你可以直接下载本项目根目录下的示例视频进行试听对比。
 
