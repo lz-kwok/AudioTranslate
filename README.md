@@ -66,8 +66,8 @@ python -m audiotranslate.main input.mp4 --target_lang zh --source_lang en --voic
 我们以英伟达 GTC 大会黄仁勋的演讲片段为例，展示转换前后的效果对比：
 
 | 原始视频 (English) | 翻译配音版 (Chinese) |
-| :--- | :--- |
-| `nvidia-...-01.mp4` | `nvidia-...-01_zh.mp4` |
+| :---: | :---: |
+| <video src="nvidia-2047718945059156440-01.mp4" width="320" controls></video> | <video src="nvidia-2047718945059156440-01_zh.mp4" width="320" controls></video> |
 | 包含 Jensen Huang 的原声及现场背景音。 | 替换为磁性男声 (Yunxi)，**背景音完整保留**。 |
 | - | **自动调速**：针对较长的中文翻译进行了语速优化，无重叠。 |
 
