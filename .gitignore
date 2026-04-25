@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Project specific
+.translate_workspace/
+*.mp4
+!OpenAIDev.mp4
+!nvidia-2047718945059156440-01.mp4
+# Keep the example mp4s if they are small, but the user might want to exclude all mp4s.
+# Actually, usually we don't push large media.
+# I'll exclude all mp4s by default but maybe the user wants them?
+# The user asked to translate nvidia...01.mp4.
+# I'll exclude all mp4s and the workspace.
+
+*.mp4
+*.wav
+*.mp3
+
+# IDEs
+.vscode/
+.idea/
+.gemini/
+.superpowers/

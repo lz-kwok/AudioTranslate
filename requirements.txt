@@ -1,0 +1,11 @@
+faster-whisper
+demucs
+argostranslate
+edge-tts
+ffmpeg-python
+click
+tqdm
+static-ffmpeg
+torch==2.6.0+cpu
+torchaudio==2.6.0+cpu
+--index-url https://download.pytorch.org/whl/cpu
