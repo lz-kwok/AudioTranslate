@@ -67,7 +67,7 @@ python -m audiotranslate.main input.mp4 --target_lang zh --source_lang en --voic
 
 | 原始视频 (English) | 翻译配音版 (Chinese) |
 | :---: | :---: |
-| <video src="nvidia-2047718945059156440-01.mp4" width="320" controls></video> | <video src="nvidia-2047718945059156440-01_zh.mp4" width="320" controls></video> |
+| <video src="https://github.com/lz-kwok/AudioTranslate/raw/main/nvidia-2047718945059156440-01.mp4" width="320" controls></video> | <video src="https://github.com/lz-kwok/AudioTranslate/raw/main/nvidia-2047718945059156440-01_zh.mp4" width="320" controls></video> |
 | 包含 Jensen Huang 的原声及现场背景音。 | 替换为磁性男声 (Yunxi)，**背景音完整保留**。 |
 | - | **自动调速**：针对较长的中文翻译进行了语速优化，无重叠。 |
 
