@@ -23,11 +23,16 @@ wheels/
 
 # Project specific
 .translate_workspace/
+checkpoints_v2/
+melotts_repo/
 *.mp4
 *.wav
 *.mp3
 !nvidia-2047718945059156440-01.mp4
 !nvidia-2047718945059156440-01_zh.mp4
+checkpoints_v2.zip
+download_checkpoints.py
+hf_download.py
 
 # IDEs
 .vscode/

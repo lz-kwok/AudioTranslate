@@ -7,6 +7,7 @@ from audiotranslate.processor import AudioProcessor
 from audiotranslate.transcriber import Transcriber
 from audiotranslate.translator import Translator
 from audiotranslate.generator import Generator
+from audiotranslate.cloner import VoiceCloner
 
 # Configure logging
 logging.basicConfig(
@@ -26,7 +27,8 @@ logger = logging.getLogger(__name__)
 @click.option('--device', '-d', default='cpu', type=click.Choice(['cuda', 'cpu']), help='Device to use for processing')
 @click.option('--model_size', default='base', help='Whisper model size (tiny, base, small, medium, large-v3)')
 @click.option('--voice', help='Specific TTS voice (e.g., zh-CN-YunxiNeural)')
-def main(input_path, target_lang, source_lang, output, device, model_size, voice):
+@click.option('--clone', is_flag=True, help='Clone original voice timbre (requires OpenVoice)')
+def main(input_path, target_lang, source_lang, output, device, model_size, voice, clone):
     """AudioTranslate: Local video/audio translation with background preservation."""
     if not output:
         base, ext = os.path.splitext(input_path)
@@ -72,8 +74,16 @@ def main(input_path, target_lang, source_lang, output, device, model_size, voice
             "en": "en-US-GuyNeural"
         }
         voice = voice_map.get(target_lang, "zh-CN-XiaoxiaoNeural")
-    generator = Generator(voice=voice)
-    final_segments = generator.generate_segments(translated_segments, os.path.join(workspace, "tts"))
+    cloner = None
+    if clone:
+        cloner = VoiceCloner(device=device)
+    
+    generator = Generator(voice=voice, cloner=cloner)
+    final_segments = generator.generate_segments(
+        translated_segments, 
+        os.path.join(workspace, "tts"),
+        reference_audio=vocals_path if clone else None
+    )
     
     # Stage 6: Mixing
     click.echo("--- Stage 6: Mixing Audio ---")

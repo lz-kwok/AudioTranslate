@@ -13,6 +13,7 @@
 - ✅ **全本地化**：支持 Faster-Whisper (转录) 和 Argos Translate (翻译)，无需联网，保护隐私。
 - ✅ **背景音保留**：在替换配音的同时，完美保留原片的背景音乐、掌声及环境音。
 - ✅ **自动语速对齐**：智能检测翻译后的语速，如果译文过长会自动进行无损加速（atempo），确保语音不重叠且节奏自然。
+- ✅ **音色克隆 (Beta)**：集成 OpenVoice V2，支持提取原视频人物音色并应用到配音中，让翻译更真实。
 - ✅ **高质量配音**：集成 Edge-TTS，支持多种极具表现力的磁性男声与柔美女声。
 
 ## 🛠️ 技术栈
@@ -52,6 +53,9 @@ pip install -r requirements.txt
 # 基础用法：将英文视频翻译为中文（默认女声）
 python -m audiotranslate.main input.mp4
 
+# 高级用法：使用原视频人物音色进行配音 (需要安装 OpenVoice 并下载权重)
+python -m audiotranslate.main input.mp4 --clone
+
 # 高级用法：指定男声、转录模型大小及源语言
 python -m audiotranslate.main input.mp4 --target_lang zh --source_lang en --voice zh-CN-YunxiNeural --model_size small
 ```
@@ -61,6 +65,7 @@ python -m audiotranslate.main input.mp4 --target_lang zh --source_lang en --voic
 - `-t, --target_lang`: 目标语言（默认 `zh`）。
 - `-s, --source_lang`: 源语言（默认 `en`）。
 - `--voice`: 指定 TTS 发音人（如 `zh-CN-YunxiNeural` 为磁性男声）。
+- `--clone`: 启用音色克隆（需要单独下载 OpenVoice V2 权重）。
 - `--model_size`: Whisper 模型大小 (`tiny`, `base`, `small`, `medium`, `large-v3`)。
 
 ## 📺 效果对比 (Case Study)
@@ -110,7 +115,37 @@ A: 这是由于某些版本的 TorchCodec 在 Windows 上存在兼容性问题�
 A: 本项目使用的是 Argos Translate 本地模型。对于复杂句子，可以尝试调整 `transcriber` 的 `model_size`（如改为 `large-v3`）以获得更准确的转录基础。
 
 **Q: 语音合成的声音可以更换吗？**
-A: 可以。通过 `--voice` 参数可以指定 Edge-TTS 支持的所有发音人。你可以运行 `edge-tts --list-voices` 来查看完整列表。
+A: 可以。通过 `--voice` 参数可以指定 Edge-TTS 支持的所有发音人。启用 `--clone` 后，程序会尝试匹配原声。
+
+## 🎭 音色克隆 (OpenVoice V2)
+
+本项目现已集成 [OpenVoice V2](https://github.com/myshell-ai/OpenVoice)，支持提取原视频中人物的音色（Tone Color）并应用到生成的翻译配音中。
+
+### 启用步骤
+
+1. **准备源码**：
+   克隆 OpenVoice 仓库到项目根目录：
+   ```bash
+   git clone https://github.com/myshell-ai/OpenVoice.git
+   ```
+
+2. **下载权重**：
+   从 [Hugging Face](https://huggingface.co/myshellai/OpenVoiceV2/tree/main) 下载 `checkpoints_v2` 并解压到项目根目录的 `checkpoints_v2/` 文件夹下。结构如下：
+   ```text
+   checkpoints_v2/
+   └── converter/
+       ├── checkpoint.pth
+       └── config.json
+   ```
+
+3. **运行**：
+   在命令中添加 `--clone` 参数：
+   ```bash
+   python -m audiotranslate.main input.mp4 --clone
+   ```
+
+### 兼容性提示 (Windows + Python 3.13)
+由于 Python 3.13 移除了 `pkg_resources`，运行 OpenVoice 时可能报错。本项目已在 `requirements.txt` 中锁定了 `setuptools==69.5.1` 以解决此问题。此外，代码已针对无 CUDA 环境进行了自动 CPU 适配。
 
 ## 🤝 贡献指南
 
