@@ -29,7 +29,8 @@ logger = logging.getLogger(__name__)
 @click.option('--voice', help='Specific TTS voice (e.g., zh-CN-YunxiNeural)')
 @click.option('--clone', is_flag=True, help='Clone original voice timbre (requires OpenVoice)')
 @click.option('--diarize', is_flag=True, help='Enable multi-speaker detection and cloning')
-def main(input_path, target_lang, source_lang, output, device, model_size, voice, clone, diarize):
+@click.option('--emotion', is_flag=True, help='Enable emotion-aware TTS prosody (requires --clone)')
+def main(input_path, target_lang, source_lang, output, device, model_size, voice, clone, diarize, emotion):
     """AudioTranslate: Local video/audio translation with background preservation."""
     if not output:
         base, ext = os.path.splitext(input_path)
@@ -83,7 +84,8 @@ def main(input_path, target_lang, source_lang, output, device, model_size, voice
     final_segments = generator.generate_segments(
         translated_segments, 
         os.path.join(workspace, "tts"),
-        reference_audio=vocals_path if clone else None
+        reference_audio=vocals_path if clone else None,
+        use_emotion=emotion,
     )
     
     # Stage 6: Mixing

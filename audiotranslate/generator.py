@@ -7,16 +7,37 @@ from audiotranslate.cloner import VoiceCloner
 
 logger = logging.getLogger(__name__)
 
+# Emotion label → console emoji for readability
+_EMOTION_ICON = {
+    "excited": "🚀",
+    "happy":   "😊",
+    "angry":   "😠",
+    "sad":     "😢",
+    "fearful": "😨",
+    "neutral": "😐",
+}
+
+
 class Generator:
     def __init__(self, voice="zh-CN-XiaoxiaoNeural", cloner: VoiceCloner = None):
         self.voice = voice
         self.cloner = cloner
 
-    async def generate_async(self, text, output_path, retries=3):
-        """Generates audio for a given text using edge-tts with retries."""
+    # ── Core TTS ────────────────────────────────────────────────
+
+    async def generate_async(self, text, output_path,
+                             rate="+0%", pitch="+0Hz", volume="+0%",
+                             retries=3):
+        """Generates audio using edge-tts with optional prosody overrides."""
         for i in range(retries):
             try:
-                communicate = edge_tts.Communicate(text, self.voice)
+                communicate = edge_tts.Communicate(
+                    text,
+                    self.voice,
+                    rate=rate,
+                    pitch=pitch,
+                    volume=volume,
+                )
                 await communicate.save(output_path)
                 if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
                     return output_path
@@ -27,54 +48,80 @@ class Generator:
                 await asyncio.sleep(1)
         return None
 
-    def generate(self, text, output_path):
+    def generate(self, text, output_path,
+                 rate="+0%", pitch="+0Hz", volume="+0%"):
         """Synchronous wrapper for generate_async."""
         if not text.strip():
             return None
         try:
-            return asyncio.run(self.generate_async(text, output_path))
+            return asyncio.run(
+                self.generate_async(text, output_path,
+                                    rate=rate, pitch=pitch, volume=volume)
+            )
         except Exception as e:
             logger.error(f"TTS generation failed: {e}")
             return None
 
+    # ── Speaker reference helpers ────────────────────────────────
+
     def _extract_speaker_reference(self, reference_audio, segments, speaker_id, output_path):
-        """Extracts a representative clip for a specific speaker."""
-        # Find the longest segment for this speaker to get the best quality SE
+        """Extracts the longest segment for a specific speaker as reference audio."""
         speaker_segments = [s for s in segments if s.get("speaker") == speaker_id]
         if not speaker_segments:
             return None
-        
-        # Sort by duration
-        speaker_segments.sort(key=lambda x: x['end'] - x['start'], reverse=True)
+        speaker_segments.sort(key=lambda x: x["end"] - x["start"], reverse=True)
         best_seg = speaker_segments[0]
-        
-        # Extract at least 3-5 seconds if possible, otherwise take what we have
-        start = best_seg['start']
-        end = best_seg['end']
-        
         try:
             audio = AudioSegment.from_file(reference_audio)
-            chunk = audio[start*1000 : end*1000]
+            chunk = audio[best_seg["start"] * 1000: best_seg["end"] * 1000]
             chunk.export(output_path, format="wav")
             return output_path
         except Exception as e:
             logger.error(f"Failed to extract reference for {speaker_id}: {e}")
             return None
 
-    def generate_segments(self, segments, output_dir, reference_audio=None):
-        """Generates audio for each translated segment, with optional multi-speaker cloning."""
+    def _extract_segment_clip(self, reference_audio, start, end, output_path):
+        """Extracts one exact segment clip for emotion analysis."""
+        try:
+            audio = AudioSegment.from_file(reference_audio)
+            chunk = audio[int(start * 1000): int(end * 1000)]
+            chunk.export(output_path, format="wav")
+            return output_path
+        except Exception as e:
+            logger.debug(f"Clip extraction failed [{start:.1f}s‥{end:.1f}s]: {e}")
+            return None
+
+    # ── Main generation loop ─────────────────────────────────────
+
+    def generate_segments(self, segments, output_dir,
+                          reference_audio=None, use_emotion=False):
+        """
+        Generates audio for each translated segment.
+
+        Optional features (enabled via flags):
+          reference_audio  – enables voice cloning (multi-speaker)
+          use_emotion      – enables emotion-aware TTS prosody
+        """
         os.makedirs(output_dir, exist_ok=True)
         cloning_tmp = os.path.join(output_dir, "cloning_tmp")
         os.makedirs(cloning_tmp, exist_ok=True)
-        
+
+        # ── Lazy-import emotion analyzer ────────────────────────
+        emotion_analyzer = None
+        if use_emotion:
+            from audiotranslate.emotion_analyzer import EmotionAnalyzer
+            emotion_analyzer = EmotionAnalyzer()
+            logger.info("Emotion-aware TTS enabled.")
+
+        # ── Step 1: Pre-extract SE for all unique speakers ──────
         speaker_se_map = {}
-        source_se = None # Source SE is from the TTS, usually consistent
-        
-        # Step 1: Pre-extract SE for all unique speakers if cloning is enabled
+        source_se = None
+
         if self.cloner and self.cloner.is_available and reference_audio:
-            unique_speakers = sorted(list(set(s.get("speaker", "speaker_0") for s in segments)))
+            unique_speakers = sorted(
+                set(s.get("speaker", "speaker_0") for s in segments)
+            )
             logger.info(f"Detected speakers: {unique_speakers}. Extracting tone colors...")
-            
             for spk_id in unique_speakers:
                 ref_clip = os.path.join(cloning_tmp, f"ref_{spk_id}.wav")
                 if self._extract_speaker_reference(reference_audio, segments, spk_id, ref_clip):
@@ -82,32 +129,58 @@ class Generator:
                     se = self.cloner.extract_se(ref_clip, cloning_tmp)
                     if se is not None:
                         speaker_se_map[spk_id] = se
-        
-        # Step 2: Generation loop
+
+        # ── Step 2: Generation loop ─────────────────────────────
         for i, segment in enumerate(segments):
-            text = segment.get("translated_text", "")
+            text       = segment.get("translated_text", "")
+            orig_text  = segment.get("text", "")
             speaker_id = segment.get("speaker", "speaker_0")
-            
-            if text:
-                base_file = os.path.join(output_dir, f"segment_{i}_base.mp3")
-                final_file = os.path.join(output_dir, f"segment_{i}.wav")
-                
-                # Step 2a: Generate base TTS
-                self.generate(text, base_file)
-                
-                # Step 2b: Optional Cloning
-                target_se = speaker_se_map.get(speaker_id)
-                if target_se is not None and self.cloner:
-                    # Extract source SE from the first successful generation if not already done
-                    if source_se is None:
-                        source_se = self.cloner.get_audio_se(base_file, cloning_tmp)
-                    
-                    if source_se is not None:
-                        self.cloner.convert(base_file, source_se, target_se, final_file)
-                        segment["tts_path"] = final_file
-                    else:
-                        segment["tts_path"] = base_file
+            start      = segment.get("start", 0.0)
+            end        = segment.get("end",   0.0)
+
+            if not text:
+                continue
+
+            base_file  = os.path.join(output_dir, f"segment_{i}_base.mp3")
+            final_file = os.path.join(output_dir, f"segment_{i}.wav")
+
+            # — Emotion analysis —
+            rate   = "+0%"
+            pitch  = "+0Hz"
+            volume = "+0%"
+
+            if emotion_analyzer and reference_audio:
+                clip_path = os.path.join(cloning_tmp, f"emo_clip_{i}.wav")
+                self._extract_segment_clip(reference_audio, start, end, clip_path)
+                emo = emotion_analyzer.analyze(clip_path, text)
+
+                rate   = emo["rate"]
+                pitch  = emo["pitch"]
+                volume = emo["volume"]
+
+                icon = _EMOTION_ICON.get(emo["emotion"], "😐")
+                print(
+                    f"[Seg {i:03d}] {speaker_id} | "
+                    f"{icon} {emo['emotion']:7s} "
+                    f"(arousal={emo['arousal']:.2f} valence={emo['valence']:.2f}) | "
+                    f"rate: {rate:>5s}  pitch: {pitch:>6s}  vol: {volume:>5s}",
+                    flush=True,
+                )
+
+            # — Base TTS with emotion prosody —
+            self.generate(text, base_file, rate=rate, pitch=pitch, volume=volume)
+
+            # — Optional voice cloning —
+            target_se = speaker_se_map.get(speaker_id)
+            if target_se is not None and self.cloner:
+                if source_se is None:
+                    source_se = self.cloner.get_audio_se(base_file, cloning_tmp)
+                if source_se is not None:
+                    self.cloner.convert(base_file, source_se, target_se, final_file)
+                    segment["tts_path"] = final_file
                 else:
                     segment["tts_path"] = base_file
-                    
+            else:
+                segment["tts_path"] = base_file
+
         return segments
