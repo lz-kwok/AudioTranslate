@@ -15,6 +15,7 @@
 - ✅ **背景音保留**：在替换配音的同时，完美保留原片的背景音乐、掌声及环境音。
 - ✅ **自动语速对齐**：智能检测翻译后的语速，如果译文过长会自动进行无损加速（atempo），确保语音不重叠且节奏自然。
 - ✅ **音色克隆 (High Quality)**：集成 OpenVoice V2，支持提取原视频人物音色并应用到配音中，即使只有几秒素材也能通过自动补齐技术实现稳定克隆。
+- ✅ **情绪感知 TTS**：**[NEW]** 集成双层情绪分析器（声学特征+语义情感），通过 SSML 实时调节配音的语速、音高和音量，使配音更有“人情味”。
 - ✅ **高质量配音**：集成 Edge-TTS，支持多种极具表现力的磁性男声与柔美女声。
 
 ## 🛠️ 技术栈
@@ -55,8 +56,8 @@ pip install -r requirements.txt
 # 基础用法：将英文视频翻译为中文（默认女声）
 python -m audiotranslate.main input.mp4
 
-# 高级用法：使用原视频人物音色进行配音 (需要安装 OpenVoice 并下载权重)
-python -m audiotranslate.main input.mp4 --clone
+# 高级用法：使用音色克隆 + 角色识别 + 情绪感知
+python -m audiotranslate.main input.mp4 --clone --diarize --emotion
 
 # 高级用法：指定男声、转录模型大小及源语言
 python -m audiotranslate.main input.mp4 --target_lang zh --source_lang en --voice zh-CN-YunxiNeural --model_size small
@@ -69,6 +70,7 @@ python -m audiotranslate.main input.mp4 --target_lang zh --source_lang en --voic
 - `--voice`: 指定 TTS 发音人（如 `zh-CN-YunxiNeural` 为磁性男声）。
 - `--clone`: 启用音色克隆（需要单独下载 OpenVoice V2 权重）。
 - `--diarize`: 开启多角色识别与克隆（自动识别不同说话人并分别克隆）。
+- `--emotion`: 开启实时情绪感知（根据原声情绪调节配音语气）。
 - `--model_size`: Whisper 模型大小 (`tiny`, `base`, `small`, `medium`, `large-v3`)。
 
 ## 📺 效果对比 (Case Study)
@@ -105,9 +107,10 @@ audiotranslate/
 ## 📝 路线图
 
 - [x] 支持多角色识别与分别配音。
+- [x] 支持实时情绪感知配音。
 - [ ] 支持更多本地 TTS 引擎（如 Piper, Kokoro-ONNX）。
 - [ ] 增加图形化界面 (GUI)。
-- [ ] 优化断点续传功能。
+- [ ] 优化断点续传与缓存机制。
 
 ## ❓ 常见问题 (FAQ)
 
