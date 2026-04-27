@@ -11,4 +11,5 @@ torchaudio==2.6.0+cpu
 librosa
 pydub
 setuptools==69.5.1
+modelscope
 --index-url https://download.pytorch.org/whl/cpu

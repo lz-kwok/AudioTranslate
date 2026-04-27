@@ -13,7 +13,11 @@ class Translator:
 
     def _setup_packages(self):
         """Downloads and installs language packages if missing."""
-        argostranslate.package.update_package_index()
+        try:
+            argostranslate.package.update_package_index()
+        except Exception as e:
+            logger.warning(f"Failed to update translation package index: {e}. Trying to proceed with cached packages.")
+        
         available_packages = argostranslate.package.get_available_packages()
         
         # Filter for the desired pair

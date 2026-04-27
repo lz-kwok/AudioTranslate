@@ -40,3 +40,4 @@ hf_download.py
 .gemini/
 .superpowers/
 docs/superpowers/
+.gstack/

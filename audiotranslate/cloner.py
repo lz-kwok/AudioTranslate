@@ -60,6 +60,25 @@ class VoiceCloner:
             return None
         
         try:
+            import librosa
+            import soundfile as sf
+            import numpy as np
+
+            # Check duration
+            duration = librosa.get_duration(filename=audio_path)
+            if duration < 3.0:
+                logger.info(f"Audio {audio_path} is too short ({duration:.2f}s), padding by repetition...")
+                y, sr = librosa.load(audio_path, sr=None)
+                # Repeat until it's at least 5 seconds
+                repeats = int(np.ceil(5.0 / duration))
+                y_padded = np.tile(y, repeats)
+                
+                # Save to a temporary padded file
+                padded_path = audio_path.replace(".wav", "_padded.wav")
+                sf.write(padded_path, y_padded, sr)
+                audio_path = padded_path
+                logger.info(f"Created padded reference audio: {audio_path}")
+
             if not vad:
                 # Direct extraction without VAD or splitting, good for short/clean generated audio
                 return self.converter.extract_se(audio_path)

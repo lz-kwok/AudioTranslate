@@ -28,7 +28,8 @@ logger = logging.getLogger(__name__)
 @click.option('--model_size', default='base', help='Whisper model size (tiny, base, small, medium, large-v3)')
 @click.option('--voice', help='Specific TTS voice (e.g., zh-CN-YunxiNeural)')
 @click.option('--clone', is_flag=True, help='Clone original voice timbre (requires OpenVoice)')
-def main(input_path, target_lang, source_lang, output, device, model_size, voice, clone):
+@click.option('--diarize', is_flag=True, help='Enable multi-speaker detection and cloning')
+def main(input_path, target_lang, source_lang, output, device, model_size, voice, clone, diarize):
     """AudioTranslate: Local video/audio translation with background preservation."""
     if not output:
         base, ext = os.path.splitext(input_path)
@@ -55,10 +56,10 @@ def main(input_path, target_lang, source_lang, output, device, model_size, voice
         click.echo("Error: Vocal separation failed.")
         return
     
-    # Stage 3: Transcription
-    click.echo(f"--- Stage 3: Transcribing ({source_lang}) ---")
+    # Stage 3: Transcription & Diarization
+    click.echo(f"--- Stage 3: Transcribing ({source_lang}) {'with Diarization' if diarize else ''} ---")
     transcriber = Transcriber(model_size=model_size, device=device)
-    segments = transcriber.transcribe(vocals_path, language=source_lang)
+    segments = transcriber.transcribe(vocals_path, language=source_lang, diarize=diarize)
     
     # Stage 4: Translation
     click.echo(f"--- Stage 4: Translating ({source_lang} -> {target_lang}) ---")

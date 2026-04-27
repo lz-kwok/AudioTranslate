@@ -10,18 +10,20 @@
 ## 🌟 核心特性
 
 - ✅ **人声分离**：采用 Meta 的 Demucs 模型，实现人声与背景音的高精度分离。
+- ✅ **多角色识别 (Diarization)**：集成 ModelScope CAM++ 模型，自动区分不同说话人。
 - ✅ **全本地化**：支持 Faster-Whisper (转录) 和 Argos Translate (翻译)，无需联网，保护隐私。
 - ✅ **背景音保留**：在替换配音的同时，完美保留原片的背景音乐、掌声及环境音。
 - ✅ **自动语速对齐**：智能检测翻译后的语速，如果译文过长会自动进行无损加速（atempo），确保语音不重叠且节奏自然。
-- ✅ **音色克隆 (Beta)**：集成 OpenVoice V2，支持提取原视频人物音色并应用到配音中，让翻译更真实。
+- ✅ **音色克隆 (High Quality)**：集成 OpenVoice V2，支持提取原视频人物音色并应用到配音中，即使只有几秒素材也能通过自动补齐技术实现稳定克隆。
 - ✅ **高质量配音**：集成 Edge-TTS，支持多种极具表现力的磁性男声与柔美女声。
 
 ## 🛠️ 技术栈
 
 - **语音识别**: Faster-Whisper
+- **角色识别**: ModelScope CAM++ (Diarization)
 - **人声分离**: Demucs
 - **机器翻译**: Argos Translate (Offline)
-- **语音合成**: Edge-TTS
+- **语音合成**: Edge-TTS & OpenVoice V2
 - **音视频处理**: FFmpeg & ffmpeg-python
 - **核心框架**: Python, Click, PyTorch
 
@@ -66,6 +68,7 @@ python -m audiotranslate.main input.mp4 --target_lang zh --source_lang en --voic
 - `-s, --source_lang`: 源语言（默认 `en`）。
 - `--voice`: 指定 TTS 发音人（如 `zh-CN-YunxiNeural` 为磁性男声）。
 - `--clone`: 启用音色克隆（需要单独下载 OpenVoice V2 权重）。
+- `--diarize`: 开启多角色识别与克隆（自动识别不同说话人并分别克隆）。
 - `--model_size`: Whisper 模型大小 (`tiny`, `base`, `small`, `medium`, `large-v3`)。
 
 ## 📺 效果对比 (Case Study)
@@ -101,9 +104,9 @@ audiotranslate/
 
 ## 📝 路线图
 
+- [x] 支持多角色识别与分别配音。
 - [ ] 支持更多本地 TTS 引擎（如 Piper, Kokoro-ONNX）。
 - [ ] 增加图形化界面 (GUI)。
-- [ ] 支持多角色识别与分别配音。
 - [ ] 优化断点续传功能。
 
 ## ❓ 常见问题 (FAQ)

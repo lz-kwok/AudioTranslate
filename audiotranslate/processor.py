@@ -38,6 +38,15 @@ class AudioProcessor:
             from demucs.separate import main as demucs_main
             
             output_dir = os.path.join(self.workspace_dir, "separated")
+            # Demucs creates a nested structure: output_dir/htdemucs/[filename]/vocals.wav
+            filename = os.path.basename(audio_path).split('.')[0]
+            vocals_path = os.path.join(output_dir, "htdemucs", filename, "vocals.wav")
+            no_vocals_path = os.path.join(output_dir, "htdemucs", filename, "no_vocals.wav")
+
+            if os.path.exists(vocals_path) and os.path.exists(no_vocals_path):
+                logger.info(f"Found existing separated vocals at {vocals_path}, skipping Demucs.")
+                return vocals_path, no_vocals_path
+
             os.makedirs(output_dir, exist_ok=True)
             
             # demucs uses sys.argv if no args are passed, so we must pass them explicitly
@@ -48,15 +57,7 @@ class AudioProcessor:
                 "-o", output_dir
             ]
             
-            # We might need to mock sys.argv or just pass args if main supports it
-            # Looking at demucs source, main() calls get_parser().parse_args(args)
             demucs_main(args)
-            
-            # Demucs creates a nested structure: output_dir/htdemucs/[filename]/vocals.wav
-            filename = os.path.basename(audio_path).split('.')[0]
-            vocals_path = os.path.join(output_dir, "htdemucs", filename, "vocals.wav")
-            no_vocals_path = os.path.join(output_dir, "htdemucs", filename, "no_vocals.wav")
-            
             return vocals_path, no_vocals_path
         except Exception as e:
             print(f"Error separating vocals: {str(e)}")
