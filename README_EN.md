@@ -57,38 +57,42 @@ pip install -r requirements.txt
 > **Note for Windows Users**:
 > The default `requirements.txt` is optimized for stable PyTorch CPU compatibility on Windows. If you have an NVIDIA GPU, please install the GPU version of PyTorch manually.
 
-### Examples
+### 🚀 Quick Start
 
+#### 1. Launch WebUI (Recommended)
+The most intuitive way to use the tool with visual editing.
 ```bash
-# Launch WebUI (Recommended)
 python -m audiotranslate.main webui
+```
+After launching, visit `http://localhost:7860` in your browser.
 
-# Basic usage: Translate English video to Chinese (default female voice)
+#### 2. CLI Basic Usage
+If you prefer the command line:
+```bash
+# Translate English video to Chinese (default female voice)
 python -m audiotranslate.main translate input.mp4
 
 # Advanced: Voice Cloning + Diarization + Emotion Awareness
-python -m audiotranslate.main input.mp4 --clone --diarize --emotion
-
-# Advanced: Specify male voice, transcription model size, and languages
-python -m audiotranslate.main input.mp4 --target_lang zh --source_lang en --voice zh-CN-YunxiNeural --model_size small
+python -m audiotranslate.main translate input.mp4 --clone --diarize --emotion
 ```
 
-#### CLI Parameters:
-- `input_path`: Path to the input video or audio.
-- `-t, --target_lang`: Target language (default `zh`).
-- `-s, --source_lang`: Source language (default `en`).
-- `--voice`: Specify TTS voice (e.g., `zh-CN-YunxiNeural`).
-- `--clone`: Enable Voice Cloning (requires OpenVoice V2 weights).
-- `--diarize`: Enable Multi-speaker Diarization and cloning.
-- `--emotion`: Enable Real-time Emotion Awareness.
-- `--subtitle`: Burn subtitles into video (displayed at the top by default).
-- `--short_drama`: Enable Short Drama mode (9:16 layout + blur + subtitles).
-- `--analyze`: **[NEW]** Extract dialogue and timing to a Markdown file for manual editing.
-- `--script "path.md"`: **[NEW]** Synthesize video from an edited Markdown script.
-- `--theme "Topic"`: Auto-generate a script based on a theme.
-- `--model_size`: Whisper model size (`tiny`, `base`, `small`, `medium`, `large-v3`).
+### 🖥️ WebUI Features
 
-### 🎬 Human-in-the-loop Workflow (Recommended)
+The WebUI provides powerful **Human-in-the-loop** capabilities:
+
+1. **Processing Tab**:
+    - **Step 1: Analyze Video**: Upload a video and click "Analyze Dialogue". The system extracts every line with precise timestamps and displays them in a table.
+    - **Step 2: Refine Script**:
+        - **Manual Edit**: Directly modify the translated lines in the `New Text` column.
+        - **AI Rewrite**: Enter a theme (e.g., "More humorous" or "AI Productivity") and click "Generate AI Script". The system rewrites the dialogue based on original context.
+    - **Step 3: Synthesize**: Click "Synthesize Final Video" to dub, align speed, and render the final video.
+2. **Social Media Promo Tab**:
+    - After synthesis, switch to this tab.
+    - Enter your API Key and click generate to get viral titles, copy, and hashtags for **WeChat Video Channel, TikTok, or YouTube Shorts**.
+
+---
+
+### 🎬 Human-in-the-loop Workflow (CLI version)
 
 For high-quality AI short dramas, we recommend this 3-step workflow:
 

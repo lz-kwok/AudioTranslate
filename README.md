@@ -58,38 +58,42 @@ pip install -r requirements.txt
 > **注意 (Windows 用户)**:
 > 默认的 `requirements.txt` 针对 Windows 上的 PyTorch CPU 兼容性做了优化。如果你有 NVIDIA 显卡，可以自行安装 GPU 版 PyTorch。
 
-### 使用示例
+### 🚀 快速开始
 
+#### 1. 启动图形化界面 (推荐)
+这是最直观的使用方式，支持可视化编辑台词。
 ```bash
-# 启动 WebUI (推荐)
 python -m audiotranslate.main webui
+```
+启动后，在浏览器访问 `http://localhost:7860` 即可进入界面。
 
-# 基础用法：将英文视频翻译为中文（默认女声）
+#### 2. 命令行基础用法
+如果你更喜欢使用命令行：
+```bash
+# 将英文视频翻译为中文（默认女声）
 python -m audiotranslate.main translate input.mp4
 
-# 高级用法：使用音色克隆 + 角色识别 + 情绪感知
-python -m audiotranslate.main input.mp4 --clone --diarize --emotion
-
-# 高级用法：指定男声、转录模型大小及源语言
-python -m audiotranslate.main input.mp4 --target_lang zh --source_lang en --voice zh-CN-YunxiNeural --model_size small
+# 使用音色克隆 + 角色识别 + 情绪感知
+python -m audiotranslate.main translate input.mp4 --clone --diarize --emotion
 ```
 
-#### 参数说明：
-- `input_path`: 输入视频或音频路径。
-- `-t, --target_lang`: 目标语言（默认 `zh`）。
-- `-s, --source_lang`: 源语言（默认 `en`）。
-- `--voice`: 指定 TTS 发音人（如 `zh-CN-YunxiNeural` 为磁性男声）。
-- `--clone`: 启用音色克隆（需要单独下载 OpenVoice V2 权重）。
-- `--diarize`: 开启多角色识别与克隆（自动识别不同说话人并分别克隆）。
-- `--emotion`: 开启实时情绪感知（根据原声情绪调节配音语气）。
-- `--subtitle`: 生成并硬烧录字幕到视频中（默认顶部显示，防止遮挡）。
-- `--short_drama`: 开启短剧模式（竖屏布局 + 背景模糊 + 自动字幕）。
-- `--analyze`: **[NEW]** 提取视频对话与时长到 Markdown 文件，用于人工校对或剧本重写。
-- `--script "path.md"`: **[NEW]** 根据编辑后的 Markdown 脚本合成视频，保持原视频节奏。
-- `--theme "主题"`: 开启 AI 剧本生成模式，根据主题重写对话。
-- `--model_size`: Whisper 模型大小 (`tiny`, `base`, `small`, `medium`, `large-v3`)。
+### 🖥️ 图形界面 (WebUI) 功能介绍
 
-### 🎬 人机协作短剧流程 (推荐)
+WebUI 提供了比命令行更强大的**人机协作**能力：
+
+1. **视频处理 (Processing) 标签页**：
+    - **Step 1: 视频分析**：上传视频并点击“分析对话”。系统会提取出每一句台词及其精确的时间轴，并在下方的表格中展示。
+    - **Step 2: 台词润色**：
+        - **手动编辑**：直接在表格的 `New Text` 列修改翻译后的台词。
+        - **AI 重写**：在“AI 脚本主题”框输入主题（如“更幽默一点”或“AI 提效主题”），点击“生成 AI 脚本”，系统将结合原片内容自动重写。
+    - **Step 3: 一键合成**：点击“合成最终视频”，系统将根据你编辑后的台词进行配音、语速对齐并合成视频。
+2. **社交媒体文案 (Social Media Promo) 标签页**：
+    - 在视频合成后，切换到此标签页。
+    - 输入 API Key 并点击生成，即可获得适配**视频号、TikTok、YouTube Shorts** 的爆款标题、文案及话题标签。
+
+---
+
+### 🎬 人机协作短剧流程 (命令行版)
 
 为了制作高质量、可控的 AI 短剧，推荐采用以下三步工作流：
 
