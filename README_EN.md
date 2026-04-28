@@ -78,6 +78,8 @@ python -m audiotranslate.main translate input.mp4 --clone --diarize --emotion
 
 ### 🖥️ WebUI Features
 
+![WebUI Screenshot](1.jpg)
+
 The WebUI provides powerful **Human-in-the-loop** capabilities:
 
 1. **Processing Tab**:

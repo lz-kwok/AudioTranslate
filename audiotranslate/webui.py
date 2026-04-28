@@ -273,7 +273,7 @@ class WebUI:
             # Update logs when loading
             demo.load(self.get_logs, None, log_output)
 
-        demo.launch(server_name="0.0.0.0", server_port=7860)
+        demo.launch(server_port=7861)
 
 if __name__ == "__main__":
     ui = WebUI()

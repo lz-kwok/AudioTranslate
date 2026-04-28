@@ -79,6 +79,8 @@ python -m audiotranslate.main translate input.mp4 --clone --diarize --emotion
 
 ### 🖥️ 图形界面 (WebUI) 功能介绍
 
+![WebUI Screenshot](1.jpg)
+
 WebUI 提供了比命令行更强大的**人机协作**能力：
 
 1. **视频处理 (Processing) 标签页**：
