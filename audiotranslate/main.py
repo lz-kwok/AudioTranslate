@@ -8,6 +8,7 @@ from audiotranslate.transcriber import Transcriber
 from audiotranslate.translator import Translator
 from audiotranslate.generator import Generator
 from audiotranslate.cloner import VoiceCloner
+from audiotranslate.script_generator import ScriptGenerator
 
 # Configure logging
 logging.basicConfig(
@@ -30,15 +31,18 @@ logger = logging.getLogger(__name__)
 @click.option('--clone', is_flag=True, help='Clone original voice timbre (requires OpenVoice)')
 @click.option('--diarize', is_flag=True, help='Enable multi-speaker detection and cloning')
 @click.option('--emotion', is_flag=True, help='Enable emotion-aware TTS prosody (requires --clone)')
-def main(input_path, target_lang, source_lang, output, device, model_size, voice, clone, diarize, emotion):
+@click.option('--subtitle', is_flag=True, help='Generate and burn subtitles into the video')
+@click.option('--short_drama', is_flag=True, help='Convert video to vertical (9:16) "short drama" layout with subtitles')
+@click.option('--theme', help='Automatically generate a new dialogue script based on this theme (Redubs the video)')
+@click.option('--analyze', is_flag=True, help='Extract video dialogue info to Markdown for manual scripting.')
+@click.option('--script', type=click.Path(exists=True), help='Path to a manual script file (Markdown) to synthesize.')
+def main(input_path, target_lang, source_lang, output, device, model_size, voice, clone, diarize, emotion, subtitle, short_drama, theme, analyze, script):
     """AudioTranslate: Local video/audio translation with background preservation."""
     if not output:
         base, ext = os.path.splitext(input_path)
         output = f"{base}_{target_lang}{ext}"
 
     click.echo(f"Processing: {input_path}")
-    click.echo(f"Source Language: {source_lang}")
-    click.echo(f"Target Language: {target_lang}")
     
     workspace = ".translate_workspace"
     processor = AudioProcessor(input_path, workspace)
@@ -57,49 +61,94 @@ def main(input_path, target_lang, source_lang, output, device, model_size, voice
         click.echo("Error: Vocal separation failed.")
         return
     
-    # Stage 3: Transcription & Diarization
-    click.echo(f"--- Stage 3: Transcribing ({source_lang}) {'with Diarization' if diarize else ''} ---")
-    transcriber = Transcriber(model_size=model_size, device=device)
-    segments = transcriber.transcribe(vocals_path, language=source_lang, diarize=diarize)
+    # Stage 3-4: Transcription / Script Loading / Analysis
+    original_segments = None
+    final_segments = None
     
-    # Stage 4: Translation
-    click.echo(f"--- Stage 4: Translating ({source_lang} -> {target_lang}) ---")
-    translator = Translator(from_code=source_lang, to_code=target_lang)
-    translated_segments = translator.translate_segments(segments)
+    if script:
+        click.echo(f"--- Stage 3: Loading Manual Script: {script} ---")
+        script_loader = ScriptGenerator()
+        final_segments = script_loader.load_from_markdown(script)
+        
+        # We still need original speaker diarization for cloning references
+        if clone:
+            click.echo("--- Stage 3b: Diarizing original video for voice references ---")
+            transcriber = Transcriber(model_size=model_size, device=device)
+            original_segments = transcriber.transcribe(vocals_path, language=source_lang, diarize=True)
+            
+    elif analyze:
+        click.echo("--- Stage 3: Analyzing Video for Manual Scripting ---")
+        transcriber = Transcriber(model_size=model_size, device=device)
+        segments = transcriber.transcribe(vocals_path, language=source_lang, diarize=True)
+        
+        analysis_path = f"{os.path.splitext(input_path)[0]}_analysis.md"
+        processor.save_analysis(segments, analysis_path)
+        click.echo(f"Success! Analysis saved to: {analysis_path}")
+        click.echo("Please edit the 'New Text' column in the Markdown file and run again with --script.")
+        return
+        
+    elif theme:
+        click.echo(f"--- Stage 3: Generating Script from Theme: {theme} ---")
+        generator_llm = ScriptGenerator()
+        final_segments = generator_llm.generate_from_theme(theme)
+        
+        if clone:
+            click.echo("--- Stage 3b: Diarizing original video for voice references ---")
+            transcriber = Transcriber(model_size=model_size, device=device)
+            original_segments = transcriber.transcribe(vocals_path, language=source_lang, diarize=True)
+    else:
+        # Standard Translation Pipeline
+        click.echo(f"--- Stage 3: Transcribing ({source_lang}) {'with Diarization' if diarize else ''} ---")
+        transcriber = Transcriber(model_size=model_size, device=device)
+        segments = transcriber.transcribe(vocals_path, language=source_lang, diarize=diarize)
+        original_segments = segments
+        
+        click.echo(f"--- Stage 4: Translating ({source_lang} -> {target_lang}) ---")
+        translator = Translator(from_code=source_lang, to_code=target_lang)
+        final_segments = translator.translate_segments(segments)
     
     # Stage 5: TTS Generation
     click.echo("--- Stage 5: Generating TTS ---")
+    if not final_segments:
+        click.echo("Error: No segments to process.")
+        return
+        
     if not voice:
-        # For now default to a reasonable voice for target_lang
-        voice_map = {
-            "zh": "zh-CN-XiaoxiaoNeural",
-            "en": "en-US-GuyNeural"
-        }
+        voice_map = {"zh": "zh-CN-XiaoxiaoNeural", "en": "en-US-GuyNeural"}
         voice = voice_map.get(target_lang, "zh-CN-XiaoxiaoNeural")
+    
     cloner = None
     if clone:
         cloner = VoiceCloner(device=device)
     
     generator = Generator(voice=voice, cloner=cloner)
     final_segments = generator.generate_segments(
-        translated_segments, 
+        final_segments, 
         os.path.join(workspace, "tts"),
         reference_audio=vocals_path if clone else None,
         use_emotion=emotion,
+        reference_segments=original_segments
     )
     
-    # Stage 6: Mixing
+    # Stage 6: Mixing Audio
     click.echo("--- Stage 6: Mixing Audio ---")
     mixed_audio = os.path.join(workspace, "final_audio.wav")
     processor.mix_translated_audio(bg_path, final_segments, mixed_audio)
     
-    # Stage 7: Final Merge
-    click.echo("--- Stage 7: Merging with Video ---")
+    # Stage 7: Subtitles (Optional)
+    srt_path = None
+    if subtitle or short_drama:
+        click.echo("--- Stage 7: Generating Subtitles ---")
+        srt_path = os.path.join(workspace, "subtitles.srt")
+        processor.generate_srt(final_segments, srt_path)
+    
+    # Stage 8: Final Merge
+    click.echo(f"--- Stage 8: Merging with Video {'(Short Drama Mode)' if short_drama else ''} ---")
     # Determine if input is audio or video
     is_video = any(input_path.lower().endswith(ext) for ext in ['.mp4', '.avi', '.mkv', '.mov'])
     
     if is_video:
-        processor.merge_audio_video(input_path, mixed_audio, output)
+        processor.merge_audio_video(input_path, mixed_audio, output, srt_path=srt_path, short_drama=short_drama)
     else:
         # If input is audio, just copy the mixed result
         import shutil

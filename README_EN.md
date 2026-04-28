@@ -14,8 +14,11 @@
 - ✅ **Fully Localized**: Supports Faster-Whisper (transcription) and Argos Translate (translation). No internet connection required, ensuring privacy.
 - ✅ **Background Preservation**: Perfectly keeps original background music, applause, and environmental sounds while replacing the dubbing.
 - ✅ **Auto-Speed Alignment**: Intelligently detects the speed of translated text. If the translation is too long, it performs lossless acceleration (atempo) to ensure no overlap and natural rhythm.
-- ✅ **Voice Cloning (High Quality)**: Integrated OpenVoice V2. Supports extracting the tone color of original speakers and applying it to the new dubbing, with stability even for short clips via auto-padding.
-- ✅ **Emotion-Aware TTS**: **[NEW]** Integrated a two-layer emotion analyzer (acoustic features + semantic sentiment) to adjust prosody (rate, pitch, volume) via SSML in real-time, making the dubbing sound more "human".
+- ✅ **Voice Cloning (High Quality)**: Integrated OpenVoice V2. Supports extracting the tone color of original speakers and applying it to the new dubbing.
+- ✅ **AI Script Generation**: Support generating scripts based on a theme using the `--theme` parameter.
+- ✅ **Human-in-the-loop Mode**: **[NEW]** Extract dialogue to Markdown via `--analyze`, edit it manually, and synthesize via `--script` for precise control.
+- ✅ **Short Drama Mode**: **[NEW]** Convert to 9:16 vertical layout with blurred background and high-visibility top subtitles.
+- ✅ **Emotion-Aware TTS**: Integrated a two-layer emotion analyzer to adjust prosody via SSML in real-time.
 - ✅ **High-Quality Dubbing**: Integrated Edge-TTS, supporting various expressive male and female voices.
 
 ## 🛠️ Technical Stack
@@ -71,7 +74,26 @@ python -m audiotranslate.main input.mp4 --target_lang zh --source_lang en --voic
 - `--clone`: Enable Voice Cloning (requires OpenVoice V2 weights).
 - `--diarize`: Enable Multi-speaker Diarization and cloning.
 - `--emotion`: Enable Real-time Emotion Awareness.
+- `--subtitle`: Burn subtitles into video (displayed at the top by default).
+- `--short_drama`: Enable Short Drama mode (9:16 layout + blur + subtitles).
+- `--analyze`: **[NEW]** Extract dialogue and timing to a Markdown file for manual editing.
+- `--script "path.md"`: **[NEW]** Synthesize video from an edited Markdown script.
+- `--theme "Topic"`: Auto-generate a script based on a theme.
 - `--model_size`: Whisper model size (`tiny`, `base`, `small`, `medium`, `large-v3`).
+
+### 🎬 Human-in-the-loop Workflow (Recommended)
+
+For high-quality AI short dramas, we recommend this 3-step workflow:
+
+1. **Analyze**: Extract the timeline to Markdown.
+   ```bash
+   python -m audiotranslate.main video.mp4 --analyze
+   ```
+2. **Edit**: Open `video_analysis.md` and fill in your new lines in the `New Text (Action)` column.
+3. **Synthesize**: Generate the final video from your script.
+   ```bash
+   python -m audiotranslate.main video.mp4 --script video_analysis.md --clone --short_drama
+   ```
 
 ## 📺 Comparisons (Case Study)
 

@@ -15,7 +15,10 @@
 - ✅ **背景音保留**：在替换配音的同时，完美保留原片的背景音乐、掌声及环境音。
 - ✅ **自动语速对齐**：智能检测翻译后的语速，如果译文过长会自动进行无损加速（atempo），确保语音不重叠且节奏自然。
 - ✅ **音色克隆 (High Quality)**：集成 OpenVoice V2，支持提取原视频人物音色并应用到配音中，即使只有几秒素材也能通过自动补齐技术实现稳定克隆。
-- ✅ **情绪感知 TTS**：**[NEW]** 集成双层情绪分析器（声学特征+语义情感），通过 SSML 实时调节配音的语速、音高和音量，使配音更有“人情味”。
+- ✅ **情绪感知 TTS**：集成双层情绪分析器（声学特征+语义情感），通过 SSML 实时调节配音的语速、音高和音量，使配音更有“人情味”。
+- ✅ **AI 剧本生成**：支持通过 `--theme` 参数，根据主题自动生成对话脚本。
+- ✅ **人机协作模式 (Human-in-the-loop)**：**[NEW]** 支持通过 `--analyze` 提取对话到 Markdown，手动编辑后再通过 `--script` 合成视频，实现精准控制。
+- ✅ **短剧模式**：支持一键转换为 9:16 竖屏布局，包含毛玻璃背景模糊和**顶部高显字幕**。
 - ✅ **高质量配音**：集成 Edge-TTS，支持多种极具表现力的磁性男声与柔美女声。
 
 ## 🛠️ 技术栈
@@ -71,7 +74,26 @@ python -m audiotranslate.main input.mp4 --target_lang zh --source_lang en --voic
 - `--clone`: 启用音色克隆（需要单独下载 OpenVoice V2 权重）。
 - `--diarize`: 开启多角色识别与克隆（自动识别不同说话人并分别克隆）。
 - `--emotion`: 开启实时情绪感知（根据原声情绪调节配音语气）。
+- `--subtitle`: 生成并硬烧录字幕到视频中（默认顶部显示，防止遮挡）。
+- `--short_drama`: 开启短剧模式（竖屏布局 + 背景模糊 + 自动字幕）。
+- `--analyze`: **[NEW]** 提取视频对话与时长到 Markdown 文件，用于人工校对或剧本重写。
+- `--script "path.md"`: **[NEW]** 根据编辑后的 Markdown 脚本合成视频，保持原视频节奏。
+- `--theme "主题"`: 开启 AI 剧本生成模式，根据主题重写对话。
 - `--model_size`: Whisper 模型大小 (`tiny`, `base`, `small`, `medium`, `large-v3`)。
+
+### 🎬 人机协作短剧流程 (推荐)
+
+为了制作高质量、可控的 AI 短剧，推荐采用以下三步工作流：
+
+1. **分析原视频**：提取对话时间轴到 Markdown。
+   ```bash
+   python -m audiotranslate.main video.mp4 --analyze
+   ```
+2. **人工/AI 校对**：打开生成的 `video_analysis.md`，在 `New Text (Action)` 列填入你的新台词。
+3. **一键合成**：根据修改后的脚本生成最终视频。
+   ```bash
+   python -m audiotranslate.main video.mp4 --script video_analysis.md --clone --short_drama
+   ```
 
 ## 📺 效果对比 (Case Study)
 

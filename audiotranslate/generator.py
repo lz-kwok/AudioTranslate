@@ -67,13 +67,20 @@ class Generator:
     def _extract_speaker_reference(self, reference_audio, segments, speaker_id, output_path):
         """Extracts the longest segment for a specific speaker as reference audio."""
         speaker_segments = [s for s in segments if s.get("speaker") == speaker_id]
+        
+        # Fallback: if specific speaker not found, pick any segment from the reference
+        if not speaker_segments and segments:
+            logger.warning(f"Speaker {speaker_id} not found in reference. Falling back to any available speaker.")
+            speaker_segments = segments
+            
         if not speaker_segments:
             return None
+            
         speaker_segments.sort(key=lambda x: x["end"] - x["start"], reverse=True)
         best_seg = speaker_segments[0]
         try:
             audio = AudioSegment.from_file(reference_audio)
-            chunk = audio[best_seg["start"] * 1000: best_seg["end"] * 1000]
+            chunk = audio[int(best_seg["start"] * 1000): int(best_seg["end"] * 1000)]
             chunk.export(output_path, format="wav")
             return output_path
         except Exception as e:
@@ -94,13 +101,15 @@ class Generator:
     # ── Main generation loop ─────────────────────────────────────
 
     def generate_segments(self, segments, output_dir,
-                          reference_audio=None, use_emotion=False):
+                          reference_audio=None, use_emotion=False,
+                          reference_segments=None):
         """
         Generates audio for each translated segment.
 
         Optional features (enabled via flags):
-          reference_audio  – enables voice cloning (multi-speaker)
-          use_emotion      – enables emotion-aware TTS prosody
+          reference_audio     – enables voice cloning (multi-speaker)
+          use_emotion         – enables emotion-aware TTS prosody
+          reference_segments  – optional list of original segments to extract speaker SE from
         """
         os.makedirs(output_dir, exist_ok=True)
         cloning_tmp = os.path.join(output_dir, "cloning_tmp")
@@ -118,13 +127,17 @@ class Generator:
         source_se = None
 
         if self.cloner and self.cloner.is_available and reference_audio:
+            # If we have reference segments (e.g. from original diarization), use them for SE extraction
+            # instead of using the main segments list (which might be a new script with wrong timestamps).
+            se_extraction_source = reference_segments if reference_segments else segments
+            
             unique_speakers = sorted(
                 set(s.get("speaker", "speaker_0") for s in segments)
             )
-            logger.info(f"Detected speakers: {unique_speakers}. Extracting tone colors...")
+            logger.info(f"Detected speakers in script: {unique_speakers}. Extracting tone colors from reference...")
             for spk_id in unique_speakers:
                 ref_clip = os.path.join(cloning_tmp, f"ref_{spk_id}.wav")
-                if self._extract_speaker_reference(reference_audio, segments, spk_id, ref_clip):
+                if self._extract_speaker_reference(reference_audio, se_extraction_source, spk_id, ref_clip):
                     logger.info(f"Extracting SE for {spk_id}...")
                     se = self.cloner.extract_se(ref_clip, cloning_tmp)
                     if se is not None:
