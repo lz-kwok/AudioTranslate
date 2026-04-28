@@ -15,10 +15,14 @@
 - ✅ **Background Preservation**: Perfectly keeps original background music, applause, and environmental sounds while replacing the dubbing.
 - ✅ **Auto-Speed Alignment**: Intelligently detects the speed of translated text. If the translation is too long, it performs lossless acceleration (atempo) to ensure no overlap and natural rhythm.
 - ✅ **Voice Cloning (High Quality)**: Integrated OpenVoice V2. Supports extracting the tone color of original speakers and applying it to the new dubbing.
-- ✅ **AI Script Generation**: Support generating scripts based on a theme using the `--theme` parameter.
-- ✅ **Human-in-the-loop Mode**: **[NEW]** Extract dialogue to Markdown via `--analyze`, edit it manually, and synthesize via `--script` for precise control.
-- ✅ **Short Drama Mode**: **[NEW]** Convert to 9:16 vertical layout with blurred background and high-visibility top subtitles.
-- ✅ **Emotion-Aware TTS**: Integrated a two-layer emotion analyzer to adjust prosody via SSML in real-time.
+- ✅ **AI Script Generation**: Support generating scripts based on a theme using the `--theme` parameter (maintains original pacing).
+- ✅ **Human-in-the-loop Mode**: Extract dialogue to Markdown via `--analyze`, edit manually, and synthesize via `--script` for precise control.
+- ✅ **Short Drama Mode**: Convert to 9:16 vertical layout with blurred background and high-visibility top subtitles.
+- ✅ **Local WebUI**: **[NEW]** Provides a Gradio-based graphical interface featuring:
+    - 📺 **Visual Analysis**: Real-time view of transcribed dialogue and timeline.
+    - ✍️ **Interactive Editor**: Edit lines directly in a browser table—no need to touch Markdown files.
+    - 🤖 **AI Refinement**: Input themes like "AI Productivity" to auto-rewrite scripts based on original context.
+    - 📱 **Social Media Tools**: One-click generation of titles and hashtags for TikTok, YouTube Shorts, etc.
 - ✅ **High-Quality Dubbing**: Integrated Edge-TTS, supporting various expressive male and female voices.
 
 ## 🛠️ Technical Stack
@@ -56,8 +60,11 @@ pip install -r requirements.txt
 ### Examples
 
 ```bash
+# Launch WebUI (Recommended)
+python -m audiotranslate.main webui
+
 # Basic usage: Translate English video to Chinese (default female voice)
-python -m audiotranslate.main input.mp4
+python -m audiotranslate.main translate input.mp4
 
 # Advanced: Voice Cloning + Diarization + Emotion Awareness
 python -m audiotranslate.main input.mp4 --clone --diarize --emotion
@@ -127,8 +134,8 @@ audiotranslate/
 
 - [x] Multi-speaker Diarization & Cloning.
 - [x] Emotion-Aware Dubbing.
+- [x] Graphical User Interface (WebUI).
 - [ ] More local TTS engines (Piper, Kokoro-ONNX).
-- [ ] Graphical User Interface (GUI).
 - [ ] Optimize resume and caching mechanisms.
 
 ## 🎭 Voice Cloning (OpenVoice V2)

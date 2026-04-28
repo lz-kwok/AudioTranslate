@@ -14,20 +14,37 @@ class ScriptGenerator:
         self.api_key = api_key or os.getenv("OPENAI_API_KEY")
         self.api_base = api_base or os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1")
 
-    def generate_from_theme(self, theme, duration_limit=60, num_speakers=2):
+    def generate_from_theme(self, theme, original_segments=None, duration_limit=None):
         """
-        Generates a dialogue script based on a theme.
-        Returns a list of segments.
+        Generates a dialogue script based on a theme and original context.
+        If original_segments is provided, it uses the timing and speaker info to rewrite.
         """
         if not self.api_key:
             logger.warning("No API key found for ScriptGenerator. Returning a sample script.")
             return self._get_sample_script(theme)
 
+        context_str = ""
+        if original_segments:
+            context_str = "Original Dialogue Context:\n"
+            for seg in original_segments:
+                spk = seg.get("speaker", "unknown")
+                text = seg.get("text", "")
+                context_str += f"- {spk}: {text}\n"
+            
+            if not duration_limit:
+                duration_limit = original_segments[-1]["end"]
+
         prompt = f"""
         Act as a professional short drama scriptwriter. 
-        Create a compelling dialogue script for a short video (approx {duration_limit} seconds).
+        Create a compelling dialogue script for a short video (approx {duration_limit or 60} seconds).
         Theme: {theme}
-        Number of Speakers: {num_speakers}
+        
+        {context_str}
+        
+        Instructions:
+        1. Rewrite the dialogue to fit the Theme while maintaining the original video's pace and character count if possible.
+        2. Ensure the 'text' is in Chinese.
+        3. If Original Dialogue Context is provided, follow the same number of lines and speaker order.
         
         Format the output as a JSON list of objects:
         [
@@ -35,8 +52,6 @@ class ScriptGenerator:
           {{"speaker": "speaker_1", "text": "...", "duration": 4.5}}
         ]
         
-        Ensure the 'text' is in Chinese (default for short dramas). 
-        'duration' should be an estimate of how long the line takes to speak in seconds.
         Only return the JSON.
         """
 
@@ -46,7 +61,7 @@ class ScriptGenerator:
                 "Content-Type": "application/json"
             }
             data = {
-                "model": "gpt-3.5-turbo", # Or gpt-4
+                "model": "gpt-3.5-turbo", 
                 "messages": [{"role": "user", "content": prompt}],
                 "temperature": 0.7
             }
@@ -55,7 +70,6 @@ class ScriptGenerator:
             response.raise_for_status()
             
             content = response.json()['choices'][0]['message']['content']
-            # Basic JSON extraction in case there's markdown wrap
             if "```json" in content:
                 content = content.split("```json")[1].split("```")[0].strip()
             elif "```" in content:
@@ -65,23 +79,69 @@ class ScriptGenerator:
             
             # Convert to internal segment format
             segments = []
-            current_time = 0.5
-            for i, item in enumerate(script):
-                dur = item.get("duration", 3.0)
-                segments.append({
-                    "start": current_time,
-                    "end": current_time + dur,
-                    "speaker": item.get("speaker", f"speaker_{i % num_speakers}"),
-                    "text": item.get("text", ""),
-                    "translated_text": item.get("text", "") # Already in target language
-                })
-                current_time += dur + 0.5 # Add small pause
+            if original_segments and len(script) == len(original_segments):
+                # Map back to original timing
+                for i, item in enumerate(script):
+                    orig = original_segments[i]
+                    segments.append({
+                        "start": orig["start"],
+                        "end": orig["end"],
+                        "speaker": orig.get("speaker", item.get("speaker", f"speaker_{i}")),
+                        "text": item.get("text", ""),
+                        "translated_text": item.get("text", "")
+                    })
+            else:
+                current_time = 0.5
+                for i, item in enumerate(script):
+                    dur = item.get("duration", 3.0)
+                    segments.append({
+                        "start": current_time,
+                        "end": current_time + dur,
+                        "speaker": item.get("speaker", f"speaker_{i}"),
+                        "text": item.get("text", ""),
+                        "translated_text": item.get("text", "")
+                    })
+                    current_time += dur + 0.5
                 
             return segments
 
         except Exception as e:
             logger.error(f"Failed to generate script via LLM: {e}")
             return self._get_sample_script(theme)
+
+    def generate_promo_copy(self, script_text):
+        """Generates title, content, and hashtags for social media."""
+        if not self.api_key:
+            return "Error: No API key for promo generation."
+
+        prompt = f"""
+        Analyze the following video script and generate:
+        1. A catchy title for WeChat Video Channel (视频号).
+        2. A compelling description (approx 100 words).
+        3. 3-5 relevant hashtags.
+        
+        Script:
+        {script_text}
+        
+        Output in Chinese.
+        """
+
+        try:
+            headers = {
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json"
+            }
+            data = {
+                "model": "gpt-3.5-turbo",
+                "messages": [{"role": "user", "content": prompt}],
+                "temperature": 0.8
+            }
+            
+            response = requests.post(f"{self.api_base}/chat/completions", headers=headers, json=data)
+            response.raise_for_status()
+            return response.json()['choices'][0]['message']['content']
+        except Exception as e:
+            return f"Failed to generate promo: {e}"
 
     def load_from_markdown(self, file_path):
         """

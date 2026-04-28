@@ -16,9 +16,14 @@
 - ✅ **自动语速对齐**：智能检测翻译后的语速，如果译文过长会自动进行无损加速（atempo），确保语音不重叠且节奏自然。
 - ✅ **音色克隆 (High Quality)**：集成 OpenVoice V2，支持提取原视频人物音色并应用到配音中，即使只有几秒素材也能通过自动补齐技术实现稳定克隆。
 - ✅ **情绪感知 TTS**：集成双层情绪分析器（声学特征+语义情感），通过 SSML 实时调节配音的语速、音高和音量，使配音更有“人情味”。
-- ✅ **AI 剧本生成**：支持通过 `--theme` 参数，根据主题自动生成对话脚本。
-- ✅ **人机协作模式 (Human-in-the-loop)**：**[NEW]** 支持通过 `--analyze` 提取对话到 Markdown，手动编辑后再通过 `--script` 合成视频，实现精准控制。
+- ✅ **AI 剧本生成**：支持通过 `--theme` 参数，根据主题自动生成对话脚本（保持原片节奏）。
+- ✅ **人机协作模式 (Human-in-the-loop)**：支持通过 `--analyze` 提取对话到 Markdown，手动编辑后再通过 `--script` 合成视频，实现精准控制。
 - ✅ **短剧模式**：支持一键转换为 9:16 竖屏布局，包含毛玻璃背景模糊和**顶部高显字幕**。
+- ✅ **本地 WebUI**：**[NEW]** 提供基于 Gradio 的图形化界面，支持：
+    - 📺 **可视化分析**：实时查看视频转录出的台词与时间轴。
+    - ✍️ **交互式编辑**：直接在表格中润色台词，无需操作 Markdown 文件。
+    - 🤖 **AI 剧本润色**：输入“AI 提效”等主题，自动基于原片内容重写对话。
+    - 📱 **社交媒体工具**：一键生成视频号、TikTok 的标题、文案与话题。
 - ✅ **高质量配音**：集成 Edge-TTS，支持多种极具表现力的磁性男声与柔美女声。
 
 ## 🛠️ 技术栈
@@ -56,8 +61,11 @@ pip install -r requirements.txt
 ### 使用示例
 
 ```bash
+# 启动 WebUI (推荐)
+python -m audiotranslate.main webui
+
 # 基础用法：将英文视频翻译为中文（默认女声）
-python -m audiotranslate.main input.mp4
+python -m audiotranslate.main translate input.mp4
 
 # 高级用法：使用音色克隆 + 角色识别 + 情绪感知
 python -m audiotranslate.main input.mp4 --clone --diarize --emotion
@@ -130,8 +138,8 @@ audiotranslate/
 
 - [x] 支持多角色识别与分别配音。
 - [x] 支持实时情绪感知配音。
+- [x] 增加图形化界面 (WebUI)。
 - [ ] 支持更多本地 TTS 引擎（如 Piper, Kokoro-ONNX）。
-- [ ] 增加图形化界面 (GUI)。
 - [ ] 优化断点续传与缓存机制。
 
 ## ❓ 常见问题 (FAQ)

@@ -12,4 +12,5 @@ librosa
 pydub
 setuptools==69.5.1
 modelscope
+gradio
 --index-url https://download.pytorch.org/whl/cpu

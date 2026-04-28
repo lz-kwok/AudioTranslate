@@ -20,7 +20,12 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-@click.command()
+@click.group()
+def cli():
+    """AudioTranslate: Local video/audio translation with background preservation."""
+    pass
+
+@cli.command()
 @click.argument('input_path', type=click.Path(exists=True))
 @click.option('--target_lang', '-t', default='zh', help='Target language for translation (default: zh)')
 @click.option('--source_lang', '-s', default='en', help='Source language of the audio (default: en)')
@@ -36,8 +41,9 @@ logger = logging.getLogger(__name__)
 @click.option('--theme', help='Automatically generate a new dialogue script based on this theme (Redubs the video)')
 @click.option('--analyze', is_flag=True, help='Extract video dialogue info to Markdown for manual scripting.')
 @click.option('--script', type=click.Path(exists=True), help='Path to a manual script file (Markdown) to synthesize.')
-def main(input_path, target_lang, source_lang, output, device, model_size, voice, clone, diarize, emotion, subtitle, short_drama, theme, analyze, script):
-    """AudioTranslate: Local video/audio translation with background preservation."""
+def translate(input_path, target_lang, source_lang, output, device, model_size, voice, clone, diarize, emotion, subtitle, short_drama, theme, analyze, script):
+    """Run the translation pipeline from CLI."""
+    # ... existing main logic ...
     if not output:
         base, ext = os.path.splitext(input_path)
         output = f"{base}_{target_lang}{ext}"
@@ -155,6 +161,12 @@ def main(input_path, target_lang, source_lang, output, device, model_size, voice
         shutil.copy2(mixed_audio, output)
     
     click.echo(f"Success! Output saved to: {output}")
+@cli.command()
+def webui():
+    """Launch the AudioTranslate WebUI."""
+    from audiotranslate.webui import WebUI
+    ui = WebUI()
+    ui.launch()
 
 if __name__ == '__main__':
-    main()
+    cli()
